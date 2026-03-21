@@ -8,11 +8,9 @@
         body { font-family: 'Pretendard', sans-serif; background-color: #f7f3e9; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
         .header { text-align: center; margin-bottom: 20px; }
         .score-board { font-size: 24px; font-weight: bold; color: #333; margin-bottom: 10px; }
-        /* 여기에 가로줄 고정(grid-template-rows)을 추가했습니다! */
         #grid { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); gap: 10px; width: 320px; height: 320px; }
         .cell { background-color: #e2dcd0; border-radius: 15px; width: 100%; height: 100%; position: relative; display: flex; align-items: center; justify-content: center; cursor: pointer; user-select: none; overflow: hidden; }
         .target { width: 90%; height: 90%; object-fit: cover; border-radius: 50%; position: absolute; pointer-events: auto; }
-        /* 똥의 불필요한 위아래 여백(line-height)을 없앴습니다! */
         .poop { font-size: 60px; pointer-height: 1; line-height: 1; pointer-events: auto; margin-top: -5px; }
         .floating-text { position: absolute; font-size: 20px; font-weight: bold; pointer-events: none; animation: floatUp 1s ease-out forwards; z-index: 10; }
         @keyframes floatUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-30px); } }
@@ -72,18 +70,30 @@
             e.stopPropagation();
             if (!isPlaying) return;
             initAudio();
-            cell.innerHTML = '';
+            
+            // 이미지나 똥만 지우고, 둥둥 떠다니는 글자는 지우지 않도록 수정!
+            const target = cell.querySelector('.target, .poop');
+            if (target) target.remove();
+
             if (type === 'cat') { playSound('cat'); updateScore(10); showFloatingText(cell, '🍀', '#4CAF50'); } 
             else if (type === 'pot') { playSound('pot'); updateScore(20); showFloatingText(cell, '디어마이팟', '#FF9800'); } 
-            else if (type === 'poop') { playSound('poop'); updateScore(-20); showFloatingText(cell, '킹받쥬? 🤪', '#F44336'); document.body.classList.add('shake'); setTimeout(() => document.body.classList.remove('shake'), 500); clearGrid(); }
+            else if (type === 'poop') { 
+                playSound('poop'); updateScore(-20); showFloatingText(cell, '킹받쥬? 🤪', '#F44336'); 
+                document.body.classList.add('shake'); setTimeout(() => document.body.classList.remove('shake'), 500); 
+                clearGrid(); 
+            }
         }
 
         function handleMiss(e, cell) {
-            if (!isPlaying || cell.children.length > 0) return;
+            // 셀 안에 둥둥 떠다니는 글자가 있어도 타겟(이미지/똥)이 없으면 Miss 처리!
+            if (!isPlaying || cell.querySelector('.target, .poop')) return; 
             updateScore(-10); showFloatingText(cell, '-10', '#999');
         }
 
-        function clearGrid() { document.querySelectorAll('.cell').forEach(cell => cell.innerHTML = ''); }
+        function clearGrid() { 
+            // 둥둥 떠다니는 글자(floating-text)는 절대 건드리지 말고 타겟만 삭제!
+            document.querySelectorAll('.target, .poop').forEach(el => el.remove()); 
+        }
 
         function spawn() {
             if (!isPlaying) return;
